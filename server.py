@@ -406,7 +406,20 @@ def quote_pdf(quote_id):
     from quote_pdf import build_quote_pdf
     from flask import send_file
     from io import BytesIO
-    pdf = build_quote_pdf(quote, client, doc.get("settings") or {})
+    try:
+        pdf = build_quote_pdf(quote, client, doc.get("settings") or {})
+        if not isinstance(pdf, bytes) or not pdf.startswith(b"%PDF-"):
+            raise ValueError("PDF principal inválido")
+    except Exception:
+        # Não interrompe o atendimento: gera um segundo PDF comercial legível
+        # usando apenas os dados cadastrados, sem imagens.
+        app.logger.exception("Erro no PDF premium. Acionando gerador de contingência.")
+        from quote_pdf_backup import build_backup_quote_pdf
+        try:
+            pdf = build_backup_quote_pdf(quote, client, doc.get("settings") or {})
+        except Exception:
+            app.logger.exception("Falha também no PDF de contingência.")
+            return bad("Não foi possível montar o PDF. Verifique os registros e tente novamente.", 500)
     result = send_file(BytesIO(pdf), mimetype="application/pdf", as_attachment=True,
                        download_name="Orcamento_Thiago_Reis.pdf")
     result.headers["X-Content-Type-Options"] = "nosniff"
