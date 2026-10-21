@@ -1,4 +1,4 @@
-name: Publicar Thiago Reis PRO
+name: Publicar Thiago Reis PRO (versão local)
 on:
   push:
     branches: [main]
@@ -8,7 +8,7 @@ permissions:
   pages: write
   id-token: write
 concurrency:
-  group: "pages"
+  group: pages
   cancel-in-progress: false
 jobs:
   deploy:
@@ -18,12 +18,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Configurar GitHub Pages
+      - name: Habilitar Pages
         uses: actions/configure-pages@v5
-      - name: Criar artefato estático
+        with:
+          enablement: true
+      - name: Gerar artefato somente com arquivos públicos
         uses: actions/upload-pages-artifact@v4
         with:
-          path: .
+          path: ./thiago-reis-pro
       - name: Publicar
         id: deployment
         uses: actions/deploy-pages@v4
