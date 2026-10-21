@@ -97,7 +97,9 @@ def guard():
         if not request.is_json:
             return bad("Requisição inválida.", 415)
         origin = request.headers.get("Origin")
-        if origin and origin != request.host_url.rstrip("/"):
+        # Hospedagens como Cloud Run encerram o HTTPS antes do contêiner.
+        expected_origin = ("https" if PROD else request.scheme) + "://" + request.host
+        if origin and origin != expected_origin:
             return bad("Origem não autorizada.", 403)
         site = request.headers.get("Sec-Fetch-Site")
         if site and site not in ("same-origin", "none"):
