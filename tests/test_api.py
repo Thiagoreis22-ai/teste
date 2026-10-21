@@ -37,6 +37,19 @@ class Tests(unittest.TestCase):
         pdf = build_quote_pdf(quote, client, settings)
         self.assertTrue(pdf.startswith(b"%PDF-"))
 
+    def test_backup_quote_pdf_edge_cases(self):
+        from quote_pdf_backup import build_backup_quote_pdf
+        case = {"title": "Instalação elétrica", "discount": "12,50",
+                "items": [{"desc": "Instalação de câmera e manutenção", "qty": "2",
+                           "price": "105,25"} for _ in range(19)]}
+        result = build_backup_quote_pdf(case,
+                                        {"name": "Teste de cliente", "phone": ""},
+                                        {"cnpj": "69.565.582/0001-50",
+                                         "company": "Thiago Reis",
+                                         "quoteValidity": "15"})
+        self.assertTrue(result.startswith(b"%PDF-"))
+        self.assertGreater(len(result), 2500)
+
     def test_pwa_and_mobile_assets(self):
         web = app.test_client()
         self.assertEqual(web.get("/").status_code, 200)
@@ -82,6 +95,13 @@ class Tests(unittest.TestCase):
         self.assertEqual(quote_doc.mimetype, "application/pdf")
         self.assertTrue(quote_doc.data.startswith(b"%PDF-"))
         self.assertIn("Orcamento_Thiago_Reis.pdf", quote_doc.headers.get("Content-Disposition", ""))
+        # Simula falha no modelo visual: o fallback ainda entrega PDF válido.
+        from unittest.mock import patch
+        with patch("quote_pdf.build_quote_pdf", side_effect=RuntimeError("falha simulada")):
+            fallback_resp = owner.get("/api/quote-pdf/q1")
+        self.assertEqual(fallback_resp.status_code, 200, fallback_resp.status)
+        self.assertTrue(fallback_resp.data.startswith(b"%PDF-"))
+
         self.assertEqual(app.test_client().get("/api/quote-pdf/q1").status_code, 403)
         self.assertEqual(employee.post("/api/login", json={"role":"funcionario", "password":"incorreta"}).status_code, 401)
         self.assertEqual(employee.post("/api/login", json={"role":"funcionario", "password":"funcionario-teste-456"}).status_code, 200)
