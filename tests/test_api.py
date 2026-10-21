@@ -17,6 +17,26 @@ INITIAL = {
 }
 
 class Tests(unittest.TestCase):
+    def test_pdf_with_reference_and_many_items(self):
+        import base64
+        from io import BytesIO
+        from PIL import Image
+        from quote_pdf import build_quote_pdf
+        img = Image.new("RGB", (640, 960), (20, 30, 45))
+        out = BytesIO()
+        img.save(out, format="JPEG")
+        ref = "data:image/jpeg;base64," + base64.b64encode(out.getvalue()).decode()
+        quote = {"date": "2026-10-21", "title": "Serviços elétricos",
+                 "items": [{"desc": "Instalação", "qty": 2, "price": 50}],
+                 "discount": 5}
+        client = {"name": "Cliente teste"}
+        settings = {"company": "Thiago Reis", "phone": "14996600996", "quoteReferenceImage": ref}
+        pdf = build_quote_pdf(quote, client, settings)
+        self.assertTrue(pdf.startswith(b"%PDF-"))
+        quote["items"] = [{"desc": "Material", "qty": 1, "price": 30} for _ in range(15)]
+        pdf = build_quote_pdf(quote, client, settings)
+        self.assertTrue(pdf.startswith(b"%PDF-"))
+
     def test_pwa_and_mobile_assets(self):
         web = app.test_client()
         self.assertEqual(web.get("/").status_code, 200)
