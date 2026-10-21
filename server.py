@@ -385,5 +385,33 @@ def remove_job_photo(photo_id):
         execute(db, "DELETE FROM job_photos WHERE id=?", (photo_id,))
     return jsonify(ok=True)
 
+@app.get("/api/quote-pdf/<quote_id>")
+def quote_pdf(quote_id):
+    """Baixar orçamento comercial com identidade visual da empresa."""
+    if auth() != "dono":
+        return bad("Acesso somente para o proprietário.", 403)
+    if not quote_id or len(quote_id) > 100:
+        return bad("Orçamento inválido.", 400)
+    with transaction() as db:
+        state = execute(db, "SELECT payload FROM app_state WHERE id=1").fetchone()
+    if not state:
+        return bad("Dados do sistema não encontrados.", 404)
+    doc = json.loads(state["payload"])
+    quote = next((q for q in doc.get("quotes", [])
+                  if isinstance(q, dict) and str(q.get("id")) == quote_id), None)
+    if quote is None:
+        return bad("Orçamento não encontrado.", 404)
+    client = next((c for c in doc.get("clients", [])
+                   if isinstance(c, dict) and str(c.get("id")) == str(quote.get("clientId"))), {})
+    from quote_pdf import build_quote_pdf
+    from flask import send_file
+    from io import BytesIO
+    pdf = build_quote_pdf(quote, client, doc.get("settings") or {})
+    result = send_file(BytesIO(pdf), mimetype="application/pdf", as_attachment=True,
+                       download_name="Orcamento_Thiago_Reis.pdf")
+    result.headers["X-Content-Type-Options"] = "nosniff"
+    result.headers["Cache-Control"] = "private, no-store"
+    return result
+
 if __name__ == "__main__":
     app.run(host="127.0.0.1", port=int(os.getenv("PORT", "8000")), debug=False)
