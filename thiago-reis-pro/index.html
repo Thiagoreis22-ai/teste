@@ -343,10 +343,43 @@ function quoteDoc(q,client,settings){
 }
 function printQuote(id){const q=db.quotes.find(x=>x.id===id);if(!q)return;const cl=C(q.clientId)||{};document.getElementById('printArea').innerHTML=quoteDoc(q,cl,db.settings);window.print()}
 
-function printService(id){
+async function printService(id){
  const j=db.jobs.find(x=>x.id===id);if(!j)return;
- const c=C(j.clientId)||{};
- document.getElementById('printArea').innerHTML=`<div class="printTop"><div><h1>${esc(db.settings.company)}</h1><p>${esc(db.settings.legalName||'')} • CNPJ: ${esc(db.settings.cnpj||'Não informado')}</p><p>${esc(db.settings.address||db.settings.city)} • ${esc(db.settings.phone)}</p></div><div><h2>COMPROVANTE DE SERVIÇO</h2><b>Documento NÃO FISCAL</b></div></div><p><b>Cliente:</b> ${esc(c.name||'—')} • ${esc(c.phone||'—')}</p><p><b>Endereço:</b> ${esc(c.address||'—')}</p><p><b>Data:</b> ${dateFmt(j.date)}</p><h3 style="margin:24px 0 10px">${esc(j.desc)}</h3><p>${esc(j.notes||'')}</p><p><b>Valor:</b> ${M(j.price)}</p><p><b>Status:</b> ${esc(j.status)} • ${esc(j.payStatus||'pendente')}</p><p style="margin-top:38px;border-top:1px solid #ccd;padding-top:10px">Assinatura do cliente: __________________________________</p><p style="margin-top:22px"><b>Este comprovante não é nota fiscal nem substitui NFS-e.</b></p>`;
+ const c=C(j.clientId)||{},st=db.settings||{};
+ let photos=[];
+ if(CLOUD_MODE){
+  try{const res=await requestJSON('/job-photos/'+encodeURIComponent(id));photos=(res.photos||[]).slice(0,8)}catch(e){notify('Não foi possível carregar as fotos; o comprovante será gerado sem elas.')}
+ }
+ const validSig=typeof j.signature==='string'&&j.signature.startsWith('data:image/png;base64,')?j.signature:'';
+ const photosHTML=photos.length?`<div style="page-break-before:auto;margin-top:18px"><h3>REGISTRO FOTOGRÁFICO</h3><div style="display:grid;grid-template-columns:repeat(2,1fr);gap:12px">${photos.map(p=>`<div style="page-break-inside:avoid;border:1px solid #ded4be;padding:5px"><b style="font-size:11px">${p.kind==='antes'?'ANTES DO SERVIÇO':'DEPOIS DO SERVIÇO'}</b><img src="/api/job-photo/${encodeURIComponent(p.id)}" alt="${esc(p.kind)}" style="width:100%;max-height:185px;object-fit:contain;display:block;margin-top:6px"></div>`).join('')}</div></div>`:'';
+ document.getElementById('printArea').innerHTML=`<div class="serviceSheet" style="font-family:Arial,Helvetica,sans-serif;background:#fff;color:#152334">
+ <div style="background:#0e1520;color:#fff;border-bottom:4px solid #dfb34a;padding:17px 20px;display:flex;justify-content:space-between;align-items:center;gap:15px">
+ <div><h1 style="font-size:23px;letter-spacing:1px;margin:0;color:#f0c778">THIAGO REIS</h1><p style="margin:5px 0;color:#d8d8d7;font-size:11px">ELÉTRICA PREDIAL • CÂMERAS • SEGURANÇA ELETRÔNICA</p></div>
+ <div style="text-align:right"><h2 style="font-size:17px;margin:0;color:#fff">COMPROVANTE DE SERVIÇO</h2><strong style="color:#f6d38d;font-size:10px">DOCUMENTO NÃO FISCAL</strong></div></div>
+ <div style="padding:18px 20px">
+ <p style="font-size:11px"><b>${esc(st.company||'Thiago Reis')}</b> • CNPJ: <b>${esc(st.cnpj||'Não informado')}</b></p>
+ <p style="font-size:11px">${esc(st.legalName||'')} ${st.address?'- '+esc(st.address):''}</p>
+ <p style="font-size:11px">${esc(st.city||'Iacanga - SP')} • WhatsApp: ${esc(st.phone||'')}</p>
+ <h3 style="margin-top:20px;border-left:4px solid #dfb34a;padding-left:10px;font-size:13px">DADOS DO ATENDIMENTO</h3>
+ <table style="width:100%;border-collapse:collapse;font-size:12px;margin:10px 0 17px">
+ <tr><th style="text-align:left;padding:8px;background:#f2f3f4;width:28%">Cliente</th><td style="padding:8px">${esc(c.name||'—')}</td></tr>
+ <tr><th style="text-align:left;padding:8px;background:#f2f3f4">Endereço</th><td style="padding:8px">${esc(c.address||'—')}</td></tr>
+ <tr><th style="text-align:left;padding:8px;background:#f2f3f4">Telefone</th><td style="padding:8px">${esc(c.phone||'—')}</td></tr>
+ <tr><th style="text-align:left;padding:8px;background:#f2f3f4">Data e horário</th><td style="padding:8px">${dateFmt(j.date)} • ${esc(j.time||'A combinar')}</td></tr>
+ <tr><th style="text-align:left;padding:8px;background:#f2f3f4">Técnico responsável</th><td style="padding:8px">${esc(j.assignedTo||'Não informado')}</td></tr></table>
+ <h3 style="border-left:4px solid #dfb34a;padding-left:10px;font-size:13px">SERVIÇO EXECUTADO</h3><p style="font-size:14px;font-weight:bold">${esc(j.desc)}</p>
+ <p style="font-size:12px;line-height:1.5;white-space:pre-wrap">${esc(j.notes||'Sem observações adicionais')}</p>
+ ${j.materials?`<p style="font-size:12px"><b>Materiais:</b> ${esc(j.materials)}</p>`:''}
+ <div style="background:#0e1520;color:#f9d586;padding:13px 16px;display:flex;justify-content:space-between;font-size:15px;font-weight:bold;margin:17px 0"><span>VALOR DO SERVIÇO</span><span>${M(j.price)}</span></div>
+ <p style="font-size:11px"><b>Status:</b> ${esc(j.status)} • <b>Pagamento:</b> ${esc(j.payStatus||'Pendente')}</p>
+ ${photosHTML}
+ <div style="display:flex;justify-content:space-between;gap:25px;align-items:end;margin-top:36px;page-break-inside:avoid">
+ <div style="border-top:1px solid #7d8791;text-align:center;padding-top:9px;flex:1;font-size:10px"><b>${esc(st.company||'Thiago Reis')}</b><br>Prestador do serviço</div>
+ <div style="border-top:1px solid #7d8791;text-align:center;padding-top:9px;flex:1;font-size:10px">${validSig?`<img src="${esc(validSig)}" alt="Assinatura do cliente" style="width:220px;max-width:100%;height:64px;object-fit:contain;margin-top:-68px;display:block">`:''}<b>${esc(c.name||'Cliente')}</b><br>Assinatura de recebimento</div></div>
+ <p style="text-align:center;font-size:10px;color:#676f77;margin-top:26px">Este documento é apenas um comprovante comercial de serviço. Não substitui a Nota Fiscal de Serviço Eletrônica (NFS-e).</p>
+ </div></div>`;
+ const images=Array.from(document.getElementById('printArea').querySelectorAll('img'));
+ await Promise.all(images.map(img=>img.complete?Promise.resolve():new Promise(resolve=>{img.onload=resolve;img.onerror=resolve;setTimeout(resolve,2000)})));
  window.print();
 }
 
@@ -356,7 +389,7 @@ function showMore(){let other=allowed().filter(x=>['agenda','financeiro','gastos
 function makeQuotePDF(q) {
   const cl=C(q.clientId)||{}, st=db.settings||{};
   const W=595.28,H=841.89;
-  const ink=[.07,.15,.24],navy=[.025,.09,.17],blue=[.03,.47,.89],
+  const ink=[.07,.15,.24],navy=[.025,.09,.17],blue=[.79,.58,.22],
     pale=[.93,.965,1],gold=[.89,.69,.31],white=[1,1,1],muted=[.32,.40,.48],line=[.84,.89,.93];
   const pages=[];let cmds=[];
   const rgb=c=>c.map(n=>Number(n).toFixed(3)).join(' ');
