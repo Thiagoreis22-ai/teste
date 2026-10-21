@@ -47,7 +47,7 @@ class Tests(unittest.TestCase):
         # Os valores de uma OS ficam privados, mesmo que o funcionário os envie adulterados.
         current = owner.get("/api/data").json
         current["data"]["jobs"] = [{
-            "id": "j1", "clientId": "c1", "desc": "Instalação de câmera",
+            "id": "job-0001", "clientId": "c1", "desc": "Instalação de câmera",
             "date": "2026-10-20", "status": "agendado",
             "price": 900, "labor": 700, "rate": 40, "payStatus": "pendente"
         }]
@@ -70,12 +70,12 @@ class Tests(unittest.TestCase):
         import base64
         jpeg = b"\xff\xd8\xff" + b"test-image-content"*8
         upload = employee.post("/api/job-photos", json={
-            "jobId":"j1", "kind":"antes",
+            "jobId":"job-0001", "kind":"antes",
             "data":"data:image/jpeg;base64,"+base64.b64encode(jpeg).decode()
         })
         self.assertEqual(upload.status_code, 200, upload.json)
         photo_id = upload.json["id"]
-        images = owner.get("/api/job-photos/j1")
+        images = owner.get("/api/job-photos/job-0001")
         self.assertEqual(images.status_code, 200)
         self.assertEqual(len(images.json["photos"]), 1)
         shown = employee.get("/api/job-photo/"+photo_id)
