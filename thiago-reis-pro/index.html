@@ -236,7 +236,7 @@ function quoteDoc(q,client,settings){
  ${settings.address?`<div>${p(settings.address)}</div>`:''}
  <div>${p(settings.city||'Iacanga - SP e região')}</div>
  <div>WhatsApp: ${prettyPhone}</div>${settings.email?`<div>${p(settings.email)}</div>`:''}</div>
- <div class="docQuoteId"><div>ORÇAMENTO <span>Nº ${p(num)}</span></div><p><b>Emissão:</b> ${dateFmt(q.date||today())}</p><p><b>Validade:</b> ${days} dias (${vdate})</p></div></div>
+ <div class="docQuoteId"><div>ORÇAMENTO COMERCIAL</div><p><b>Emissão:</b> ${dateFmt(q.date||today())}</p><p><b>Validade:</b> ${days} dias (${vdate})</p></div></div>
  <div class="docSection">DADOS DO CLIENTE</div><div class="docClient">
  <div><label>CLIENTE</label><span>${p(client.name||'Não informado')}</span></div><div><label>CPF/CNPJ</label><span>${p(client.document||'Não informado')}</span></div>
  <div><label>TELEFONE</label><span>${p(client.phone||'Não informado')}</span></div><div><label>E-MAIL</label><span>${p(client.email||'Não informado')}</span></div>
@@ -316,7 +316,7 @@ function makeQuotePDF(q) {
   const num=shortNum(q.number),date=datePt(q.date),validity=Math.min(365,Math.max(1,Number(st.quoteValidity)||15));
   const items=(q.items||[]).map(i=>({...i,qty:Number(i.qty)||0,price:Number(i.price)||0}));
   const amount=totalQuote(q);
-  const pageTitle=`ORÇAMENTO Nº ${num}`;
+  const pageTitle='ORÇAMENTO COMERCIAL';
   function beginPage(next=false){
     cmds=[];
     rect(0,0,W,H,white);rect(0,0,W,139,navy);
@@ -401,7 +401,7 @@ function makeQuotePDF(q) {
   pdf+=`xref\n0 ${objects.length}\n0000000000 65535 f \n`;
   for(let i=1;i<objects.length;i++)pdf+=`${String(offsets[i]).padStart(10,'0')} 00000 n \n`;
   pdf+=`trailer\n<< /Size ${objects.length} /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF`;
-  return {blob:new Blob([pdf],{type:'application/pdf'}),filename:'Orcamento_Thiago_Reis_'+num+'.pdf'};
+  return {blob:new Blob([pdf],{type:'application/pdf'}),filename:'Orcamento_Thiago_Reis.pdf'};
 }
 function downloadQuote(id){
  const q=db.quotes.find(x=>x.id===id);if(!q)return;
@@ -415,7 +415,7 @@ async function shareQuote(id){
  const f=makeQuotePDF(q),file=new File([f.blob],f.filename,{type:'application/pdf'});
  const name=(C(q.clientId)||{}).name||'cliente';
  if(navigator.share&&(!navigator.canShare||navigator.canShare({files:[file]}))){
-  try{await navigator.share({files:[file],title:'Orçamento '+q.number+' - Thiago Reis',text:'Olá! Segue o orçamento em PDF para '+name+'.'});notify('PDF compartilhado.');return}
+  try{await navigator.share({files:[file],title:'Orçamento - Thiago Reis',text:'Olá! Segue o orçamento em PDF para '+name+'.'});notify('PDF compartilhado.');return}
   catch(err){if(err&&err.name==='AbortError')return;console.warn(err)}
  }
  downloadQuote(id);
