@@ -4,6 +4,9 @@ Layout inspirado na referência do proprietário; dados sempre do cadastro real.
 from io import BytesIO
 from math import cos, sin, pi
 from pathlib import Path
+from PIL import Image
+import base64
+import binascii
 import re
 
 from reportlab.pdfgen import canvas
@@ -68,6 +71,18 @@ def build_quote_pdf(quote,client,settings,assets_dir=None):
     c.setTitle("Orçamento Comercial | Thiago Reis")
     c.setAuthor(clean(settings.get("company") or "Thiago Reis",80))
     cl=client or {};st=settings or {};q=quote or {}
+    reference_img=None
+    encoded=st.get("quoteReferenceImage", "")
+    if isinstance(encoded,str) and encoded.startswith("data:image/jpeg;base64,") and len(encoded)<500000:
+        try:
+            raw=base64.b64decode(encoded.split(",",1)[1],validate=True)
+            if len(raw)<=375000:
+                tentative=Image.open(BytesIO(raw))
+                if tentative.format=="JPEG" and tentative.width>=420 and tentative.height>=600:
+                    if 0.60<tentative.width/tentative.height<0.76:
+                        reference_img=tentative.copy()
+        except (ValueError,TypeError,binascii.Error,OSError):
+            reference_img=None
     company=clean(st.get("company") or "Thiago Reis",44)
     phone=clean(st.get("phone") or "14996600996",24)
     digits=re.sub(r"\D","",phone)
@@ -125,6 +140,20 @@ def build_quote_pdf(quote,client,settings,assets_dir=None):
     def draw_header(continuation=False):
         nonlocal page
         page+=1
+        if reference_img is not None:
+            try:
+                iw,ih=reference_img.size
+                banner=reference_img.crop((0,0,iw,int(ih*.193)))
+                c.drawImage(ImageReader(banner),0,H-155,W,155,preserveAspectRatio=False)
+                # Esconde Instagram e telefone de exemplo presentes na foto de referência.
+                box(375,111,220,41,NAVY)
+                text(phone,390,117,11,True,WHITE)
+                text(clean(st.get("city") or "Iacanga - SP e região",37),390,134,8.8,False,WHITE)
+                box(0,154,W,4,GOLD)
+                if continuation:text("CONTINUAÇÃO DO ORÇAMENTO",22,162,8,True,MUTED)
+                return
+            except Exception:
+                pass
         # Banner ultramarino, texturas e sobreposições diagonais.
         for j in range(50):
             f=j/49;col=HexColor("#%02x%02x%02x"%(int(2+f*2),int(12+f*8),int(28+f*22)))
@@ -202,6 +231,14 @@ def build_quote_pdf(quote,client,settings,assets_dir=None):
             renderPDF.draw(d,c,x,H-top-size)
         except Exception:pass
     def gallery(top):
+        if reference_img is not None:
+            try:
+                iw,ih=reference_img.size
+                pic=reference_img.crop((int(iw*.032),int(ih*.759),int(iw*.971),int(ih*.845)))
+                c.drawImage(ImageReader(pic),L,H-top-55,W-2*L,55,preserveAspectRatio=False)
+                return
+            except Exception:
+                pass
         # Galeria fotográfica opcional; caso ausente, mini-ilustrações técnicas.
         photo=Path(assets_dir or Path(__file__).resolve().parent/"thiago-reis-pro")/"quote-gallery.jpg"
         if photo.exists():
@@ -229,6 +266,14 @@ def build_quote_pdf(quote,client,settings,assets_dir=None):
                     box(x+18,top+13,50,27,WHITE,HexColor("#6A7785"),4)
                     box(x+32,top+17,20,19,HexColor("#BBCBD7"),GRID,2)
     def seal(cx,cy):
+        if reference_img is not None:
+            try:
+                iw,ih=reference_img.size
+                pic=reference_img.crop((int(iw*.785),int(ih*.838),int(iw*.985),int(ih*.952)))
+                c.drawImage(ImageReader(pic),cx-41,y(cy)-41,82,82,preserveAspectRatio=False)
+                return
+            except Exception:
+                pass
         # Selo circular triplo, com faixas do modelo de referência.
         for radius,col in ((40,GOLD),(35,NAVY),(31,GOLD),(28,NAVY)):
             c.setFillColor(col);c.circle(cx,y(cy),radius,stroke=0,fill=1)
