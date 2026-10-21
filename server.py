@@ -193,7 +193,7 @@ def logout():
     resp.delete_cookie("tr_sid", path="/")
     return resp
 
-PROTECTED = ("quotes", "expenses", "incomes", "catalog", "settings")
+PROTECTED = ("quotes", "expenses", "incomes", "catalog", "settings", "stock", "stockMoves")
 EDITABLE_STAFF = ("clients", "jobs")
 @app.get("/api/data")
 def get_data():
@@ -207,6 +207,11 @@ def get_data():
     doc = json.loads(row["payload"])
     if role == "funcionario":
         doc = {key: doc.get(key, []) for key in EDITABLE_STAFF}
+        private_fields = ("price", "labor", "rate", "payStatus", "quoteId", "stockApplied", "commission", "cost", "total")
+        doc["jobs"] = [
+            {key: value for key, value in job.items() if key not in private_fields}
+            for job in doc.get("jobs", []) if isinstance(job, dict)
+        ]
     return jsonify(data=doc, revision=row["revision"], role=role)
 
 @app.put("/api/data")
@@ -236,7 +241,31 @@ def put_data():
             for key in EDITABLE_STAFF:
                 if not isinstance(data.get(key), list):
                     return bad("Lista inválida.")
-                previous[key] = data[key]
+            old_jobs = {str(job.get("id")): job for job in previous.get("jobs", []) if isinstance(job, dict)}
+            new_jobs = {str(job.get("id")): job for job in data["jobs"] if isinstance(job, dict)}
+            if (len(new_jobs) != len(data["jobs"]) or not set(old_jobs).issubset(new_jobs)
+                    or len(new_jobs) > 4000 or len(data["clients"]) > 4000):
+                return bad("Ordens de serviço inválidas ou exclusão não permitida.", 403)
+            allowed_fields = {"id", "clientId", "desc", "date", "time", "endTime",
+                              "status", "notes", "assignedTo", "startedAt", "finishedAt",
+                              "signature", "signedAt", "materials", "checklist"}
+            merged_jobs = []
+            for job_id, job in new_jobs.items():
+                if not isinstance(job, dict) or len(job_id) > 100:
+                    return bad("Ordem inválida.")
+                original = old_jobs.get(job_id, {})
+                entry = dict(original)
+                entry.update({key: value for key, value in job.items() if key in allowed_fields})
+                if not original:
+                    entry.update({"price": 0, "labor": 0, "rate": 0, "payStatus": "pendente"})
+                signature = entry.get("signature", "")
+                if signature and (not isinstance(signature, str) or
+                                  len(signature) > 180000 or
+                                  not signature.startswith("data:image/png;base64,")):
+                    return bad("Assinatura inválida.")
+                merged_jobs.append(entry)
+            previous["clients"] = data["clients"]
+            previous["jobs"] = merged_jobs
             updated = previous
         else:
             if any(not isinstance(data.get(k), list) for k in ("clients", "quotes", "jobs", "expenses", "incomes", "catalog")):
@@ -246,6 +275,10 @@ def put_data():
             # Não persistir campos de senha da interface nos dados de negócio.
             data["settings"].pop("ownerPin", None)
             data["settings"].pop("employeePin", None)
+            data.setdefault("stock", previous.get("stock", []))
+            data.setdefault("stockMoves", previous.get("stockMoves", []))
+            if not isinstance(data["stock"], list) or not isinstance(data["stockMoves"], list):
+                return bad("Estoque inválido.")
             updated = data
         execute(db, "UPDATE app_state SET revision=?,payload=? WHERE id=1",
                 (row["revision"]+1, json.dumps(updated, ensure_ascii=False),))
