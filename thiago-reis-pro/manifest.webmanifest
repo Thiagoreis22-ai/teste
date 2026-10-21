@@ -1,0 +1,21 @@
+{
+  "name": "Thiago Reis PRO — Elétrica e Câmeras",
+  "short_name": "Thiago Reis PRO",
+  "id": "/",
+  "start_url": "/?app=1",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#0a0d11",
+  "theme_color": "#0b0e13",
+  "description": "Gestão de clientes, orçamentos, serviços, fotos, agenda e estoque.",
+  "lang": "pt-BR",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "/tr-icon.svg",
+      "type": "image/svg+xml",
+      "sizes": "any",
+      "purpose": "any maskable"
+    }
+  ]
+}
