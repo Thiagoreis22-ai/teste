@@ -1,0 +1,92 @@
+/* Thiago Reis PRO — PC, Android e iPhone: ajustes de navegação e legibilidade */
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%;overflow-x:hidden}
+body{overflow-x:hidden;min-width:320px}
+button,a{touch-action:manipulation}
+a.btn{text-decoration:none;display:inline-flex;align-items:center;justify-content:center}
+button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid #eac367!important;outline-offset:3px}
+.main,.card,.two>*{min-width:0}
+.tableWrap{overflow-x:auto;overscroll-behavior-inline:contain;-webkit-overflow-scrolling:touch}
+.table td:last-child:not(.wide){white-space:normal}
+.table td .btn{margin-bottom:4px}
+.tableWrap .table td:last-child,.tableWrap .table th:last-child{position:static!important;right:auto!important;box-shadow:none!important;min-width:0!important}
+.tableWrap .table{min-width:660px}
+.tableWrap .table td{vertical-align:middle}
+.client-desktop-table{display:block}
+.client-mobile-list{display:none}
+.client-desktop-table .table{min-width:560px}
+.client-desktop-table .client-actions{display:flex;align-items:center;justify-content:flex-end;flex-wrap:wrap;gap:8px;white-space:normal;min-width:174px}
+.client-desktop-table .client-actions .btn{margin:0}
+.client-whatsapp{background:#136a3f!important;border:1px solid #2ba76c!important;color:#f4fff8!important;box-shadow:none!important}
+.client-whatsapp:hover{background:#16844e!important;color:#fff!important}
+.client-card{border:1px solid #363941;background:linear-gradient(150deg,#171c22,#11151a);border-radius:15px;padding:14px;min-width:0;box-shadow:0 4px 16px #0002}
+.client-card .client-info{display:grid;grid-template-columns:1fr;gap:6px}
+.client-card .client-name{font-size:16px;font-weight:850;color:#fff;overflow-wrap:anywhere}
+.client-card .client-detail{font-size:12px;color:#b7bdc5;line-height:1.45;overflow-wrap:anywhere}
+.client-card .client-label{color:#d2af63;font-size:10px;font-weight:850;letter-spacing:.6px;display:block;text-transform:uppercase}
+.client-card .client-buttons{display:flex;gap:8px;align-items:stretch;flex-wrap:wrap;margin-top:14px}
+.client-card .client-buttons .btn{flex:1 1 120px;min-width:0;white-space:normal;min-height:45px;display:flex;align-items:center;justify-content:center;padding:10px 12px}
+.mobile-visible-only{display:none}
+@media(min-width:1024px){.main{min-height:100vh}.side{scrollbar-color:#4d4634 #0c0f14}.dashboard-three{grid-template-columns:minmax(0,1.4fr) minmax(0,1fr) minmax(0,1fr)}.dashboard-three>.panel-stat:last-child{grid-column:auto}.quick-section{grid-template-columns:repeat(8,minmax(0,1fr))}}
+@media(min-width:1024px) and (max-width:1400px){.dashboard-three{grid-template-columns:repeat(2,minmax(0,1fr))}.dashboard-three>.panel-stat:last-child{grid-column:1/-1}}
+@media(max-width:1023px){.header-search{display:none}.tableWrap{margin:0}.toolbar{gap:10px}.toolbar .btn{max-width:100%}.dashboard-three{grid-template-columns:repeat(2,minmax(0,1fr))}.dashboard-three>.panel-stat:last-child{grid-column:1/-1}}
+@media(max-width:700px){
+ body{padding:0;margin:0}
+ .wrap,.main{width:100%;min-width:0}
+ .main{padding:0 12px calc(88px + env(safe-area-inset-bottom,0px));}
+ .top{margin:0 -12px 12px;padding:8px 12px;min-height:64px;gap:5px}
+ .top-title{flex:1;min-width:0}
+ .top-title h1{font-size:16px!important;line-height:1.1;overflow-wrap:anywhere}
+ .top-title .muted{font-size:10px!important;line-height:1.2;margin-top:4px}
+ .top-title .mobile-mark{flex:0 0 45px;display:block}
+ .topR{margin-left:4px!important;gap:5px!important}
+ .topR .avatar{width:31px;height:31px;font-size:10px}
+ .topR .btn{min-height:35px;padding:5px 8px;font-size:12px}
+ .gold-hero{max-width:100%;min-height:145px;overflow:hidden}
+ .hero-sideinfo{max-width:39%!important;min-width:0;right:6px!important}
+ .hero-sideinfo div{line-height:1.25}
+ .hero-contact{max-width:55%;overflow-wrap:anywhere;text-align:right}
+ .client-mobile-list{display:grid;gap:11px}
+ .client-desktop-table{display:none!important}
+ .toolbar{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+ .toolbar h2{font-size:17px}
+ .toolbar>.row{display:flex;width:100%;gap:7px}
+ .toolbar>.row .btn{flex:1 1 125px;white-space:normal;min-height:43px}
+ .search{font-size:16px;width:100%!important;max-width:none}
+ .fieldGrid{grid-template-columns:1fr 1fr;gap:10px}
+ .fieldGrid .full{grid-column:1/-1}
+ .modalShade{padding:0;align-items:flex-end}
+ .modal{max-height:calc(100dvh - 16px);overflow-y:auto;padding-bottom:calc(25px + env(safe-area-inset-bottom,0px))}
+ .modal .actions{gap:8px;flex-wrap:wrap}
+ .modal .actions>.btn{flex:1 1 120px}
+ .dashboard-three{grid-template-columns:1fr}
+ .dashboard-three>.panel-stat:last-child{grid-column:auto}
+ .donut-area{gap:11px;max-width:100%}
+ .donut-graphic{flex-basis:120px;width:120px;height:120px}
+ .donut-graphic:before{inset:26px}
+ .donut-legend{min-width:0}
+ .donut-legend .minirow{font-size:10px}
+ .quick-section{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+ .quick-tile{font-size:10px;min-height:78px;padding:8px 3px;line-height:1.2;overflow-wrap:anywhere}
+ .dashboard-lower{grid-template-columns:1fr}
+ .bottomNav{left:0;right:0;bottom:0;padding:9px 5px calc(8px + env(safe-area-inset-bottom,0px));gap:2px;min-height:63px;display:flex;align-items:center;justify-content:space-around;z-index:30}
+ .bottomNav button{flex:1;min-width:0;max-width:none;min-height:45px;font-size:10px;line-height:1.15;overflow-wrap:anywhere;padding:3px 2px}
+ .bottomNav button i{font-size:20px}
+ .tableWrap .table{min-width:625px}
+ .tableWrap .table td:last-child,.tableWrap .table th:last-child{position:static!important;right:auto!important;min-width:140px!important;background:transparent!important;box-shadow:none!important}
+ .tableWrap .table th:last-child{background:#252b32!important}
+ .tableWrap .table td:last-child .btn{white-space:normal;display:inline-block;margin:3px;max-width:190px}
+}
+@media(max-width:375px){
+ .main{padding-left:9px;padding-right:9px}
+ .top{margin-left:-9px;margin-right:-9px;padding-left:7px;padding-right:7px}
+ .top-title h1{font-size:14px!important}
+ .top-title .mobile-mark{flex-basis:37px}
+ .mobile-mark .brand-logo{width:37px!important;height:39px!important}
+ .topR .avatar{display:none}
+ .client-card .client-buttons .btn{flex:1 1 100%}
+ .quick-section{grid-template-columns:repeat(4,minmax(0,1fr))}
+ .quick-tile{font-size:9px}
+ .hero-contact{display:none}
+}
+@media(min-width:701px){.client-desktop-table{display:block}.client-mobile-list{display:none}}
+@media print{.client-mobile-list{display:none!important}.client-desktop-table{display:none!important}.bottomNav{display:none!important}}
