@@ -17,6 +17,20 @@ INITIAL = {
 }
 
 class Tests(unittest.TestCase):
+    def test_render_docker_includes_pdf_generators(self):
+        from pathlib import Path
+        dockerfile = (Path(__file__).resolve().parent.parent / "Dockerfile").read_text()
+        copy_instructions = [line.strip() for line in dockerfile.splitlines()
+                             if line.strip().startswith("COPY ")]
+        copied_files = set()
+        for line in copy_instructions:
+            copied_files.update(line.split()[1:-1])
+        self.assertIn("server.py", copied_files)
+        self.assertIn("quote_pdf.py", copied_files,
+                      "Render precisa copiar quote_pdf.py para o contêiner")
+        self.assertIn("quote_pdf_backup.py", copied_files,
+                      "Render precisa copiar quote_pdf_backup.py para o contêiner")
+
     def test_pdf_with_reference_and_many_items(self):
         import base64
         from io import BytesIO
