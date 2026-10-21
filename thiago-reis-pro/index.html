@@ -537,23 +537,43 @@ function makeQuotePDF(q) {
   pdf+=`trailer\n<< /Size ${objects.length} /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF`;
   return {blob:new Blob([pdf],{type:'application/pdf'}),filename:'Orcamento_Thiago_Reis.pdf'};
 }
-function downloadQuote(id){
+async function professionalQuotePDF(q){
+ if(!CLOUD_MODE)return makeQuotePDF(q);
+ let response;
+ try{response=await fetch('/api/quote-pdf/'+encodeURIComponent(q.id),{credentials:'same-origin',cache:'no-store'})}
+ catch(e){throw new Error('Sem conexão com o servidor. Não foi possível gerar o PDF.')}
+ if(!response.ok){
+  const payload=await response.json().catch(()=>({}));
+  throw new Error(payload.error||'Erro ao gerar orçamento PDF. Tente novamente.');
+ }
+ const blob=await response.blob();
+ if(blob.type&&!blob.type.includes('pdf'))throw new Error('O servidor não devolveu um PDF válido.');
+ return {blob,filename:'Orcamento_Thiago_Reis.pdf'};
+}
+async function downloadQuote(id){
  const q=db.quotes.find(x=>x.id===id);if(!q)return;
- const f=makeQuotePDF(q),a=document.createElement('a'),url=URL.createObjectURL(f.blob);
- a.href=url;a.download=f.filename;document.body.appendChild(a);a.click();a.remove();
- setTimeout(()=>URL.revokeObjectURL(url),60000);
- notify('PDF gerado. Confira seus downloads.');
+ try{
+  const f=await professionalQuotePDF(q),a=document.createElement('a'),url=URL.createObjectURL(f.blob);
+  a.href=url;a.download=f.filename;document.body.appendChild(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),60000);
+  notify('Orçamento PDF profissional preparado.');
+ }catch(e){notify(e.message||'Não foi possível gerar o PDF.')}
 }
 async function shareQuote(id){
  const q=db.quotes.find(x=>x.id===id);if(!q)return;
- const f=makeQuotePDF(q),file=new File([f.blob],f.filename,{type:'application/pdf'});
+ let f;
+ try{f=await professionalQuotePDF(q)}
+ catch(e){notify(e.message||'Não foi possível gerar o PDF.');return}
+ const file=new File([f.blob],f.filename,{type:'application/pdf'});
  const name=(C(q.clientId)||{}).name||'cliente';
  if(navigator.share&&(!navigator.canShare||navigator.canShare({files:[file]}))){
-  try{await navigator.share({files:[file],title:'Orçamento - Thiago Reis',text:'Olá! Segue o orçamento em PDF para '+name+'.'});notify('PDF compartilhado.');return}
+  try{await navigator.share({files:[file],title:'Orçamento Comercial - Thiago Reis',text:'Olá! Segue o orçamento em PDF para '+name+'.'});notify('PDF compartilhado.');return}
   catch(err){if(err&&err.name==='AbortError')return;console.warn(err)}
  }
- downloadQuote(id);
- notify('PDF baixado! No WhatsApp, anexe-o como Documento para o cliente.');
+ const a=document.createElement('a'),url=URL.createObjectURL(f.blob);
+ a.href=url;a.download=f.filename;document.body.appendChild(a);a.click();a.remove();
+ setTimeout(()=>URL.revokeObjectURL(url),60000);
+ notify('PDF baixado. No WhatsApp, anexe o documento ao cliente.');
 }
 async function convertQuote(id){const q=db.quotes.find(x=>x.id===id);if(!q||q.status!=='aprovado'||db.jobs.some(j=>j.quoteId===id))return;const labor=(q.items||[]).filter(i=>/m[aã]o de obra|instala[cç][aã]o|servi[cç]o/i.test(i.desc||'')).reduce((a,i)=>a+n(i.qty)*n(i.price),0);db.jobs.push({id:uid(),quoteId:id,clientId:q.clientId,desc:q.title,date:today(),status:'agendado',notes:q.notes||'',price:totalQuote(q),labor:Math.min(totalQuote(q),labor),rate:n(db.settings.commission),payStatus:'pendente'});if(await save()){page='servicos';draw();notify('Orçamento convertido em serviço!')}else{try{await loadDB();draw()}catch(_){}}}
 function exportCSV(){let lines=[['Data','Tipo','Descrição','Forma','Valor (R$)']];for(const x of db.incomes.filter(x=>String(x.date||'').startsWith(financeMonth)))lines.push([x.date,'Entrada',x.desc,x.method||'',n(x.amount).toFixed(2).replace('.',',')]);for(const x of db.expenses.filter(x=>String(x.date||'').startsWith(financeMonth)))lines.push([x.date,'Despesa',x.desc||x.category,x.method||'',n(x.amount).toFixed(2).replace('.',',')]);const csv='\uFEFF'+lines.map(row=>row.map(v=>'"'+String(v??'').replaceAll('"','""')+'"').join(';')).join('\r\n');const a=document.createElement('a');const u=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));a.href=u;a.download='thiago-reis-financeiro-'+financeMonth+'.csv';a.click();setTimeout(()=>URL.revokeObjectURL(u),3000)}
