@@ -73,10 +73,10 @@ def build_quote_pdf(quote,client,settings,assets_dir=None):
     cl=client or {};st=settings or {};q=quote or {}
     reference_img=None
     encoded=st.get("quoteReferenceImage", "")
-    if isinstance(encoded,str) and encoded.startswith("data:image/jpeg;base64,") and len(encoded)<500000:
+    if isinstance(encoded,str) and encoded.startswith("data:image/jpeg;base64,") and len(encoded)<1050000:
         try:
             raw=base64.b64decode(encoded.split(",",1)[1],validate=True)
-            if len(raw)<=375000:
+            if len(raw)<=770000:
                 tentative=Image.open(BytesIO(raw))
                 if tentative.format=="JPEG" and tentative.width>=420 and tentative.height>=600:
                     if 0.60<tentative.width/tentative.height<0.76:
@@ -340,7 +340,15 @@ def build_quote_pdf(quote,client,settings,assets_dir=None):
     box(L,bottom,W-2*L,43,NAVY,None,5)
     poly([(W-170,bottom),(W-149,bottom),(W-183,bottom+43),(W-205,bottom+43)],BLUE)
     text("TOTAL DO ORÇAMENTO",L+16,bottom+9,13,True,WHITE)
-    text(price(total),W-17,bottom+7,19,True,GOLD,"right")
+    # Valor centrado na área direita da faixa, com tamanho ajustado ao conteúdo.
+    amount_label=price(total)
+    zone_left,zone_right=342,W-29
+    zone_width=zone_right-zone_left-16
+    font_size=19.0
+    while font_size>9 and stringWidth(amount_label,"Helvetica-Bold",font_size)>zone_width:
+        font_size-=0.5
+    text(amount_label,(zone_left+zone_right)/2,
+         bottom+(43-font_size)/2-1,font_size,True,GOLD,"center")
     t=bottom+49
     if page>1:
         # Continuations keep monetary details intact and final notes.
