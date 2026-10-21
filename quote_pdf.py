@@ -206,7 +206,7 @@ def build_quote_pdf(quote,client,settings,assets_dir=None):
         if continuation:text("CONTINUAÇÃO DO ORÇAMENTO",22,163,8,True,MUTED)
     def draw_footer():
         box(0,815,W,27,NAVY)
-        for i,lab in enumerate(("✓  SERVIÇO COM QUALIDADE","ATENDIMENTO PERSONALIZADO","SOLUÇÕES COMPLETAS","SUPORTE PÓS-SERVIÇO")):
+        for i,lab in enumerate(("SERVIÇO COM QUALIDADE","ATENDIMENTO PERSONALIZADO","SOLUÇÕES COMPLETAS","SUPORTE PÓS-SERVIÇO")):
             text(lab,15+i*149,823,6.8,True,WHITE)
     def finish_page():
         draw_footer()
@@ -280,7 +280,7 @@ def build_quote_pdf(quote,client,settings,assets_dir=None):
         text("QUALIDADE",cx,cy-19,8.9,True,GOLD,"center")
         text("SEGURANÇA",cx,cy-6,8.9,True,GOLD,"center")
         text("CONFIANÇA",cx,cy+7,8.9,True,GOLD,"center")
-        text("★ ★ ★",cx,cy+22,9,True,GOLD,"center")
+        text("*  *  *",cx,cy+22,9,True,GOLD,"center")
     def table_header(t):
         box(L,t,W-2*L,24,NAVY)
         for x in (67,323,382,468):rule(x,t,x,t+24,HexColor("#50708A"),.7)
