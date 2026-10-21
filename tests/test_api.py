@@ -17,6 +17,26 @@ INITIAL = {
 }
 
 class Tests(unittest.TestCase):
+    def test_pwa_and_mobile_assets(self):
+        web = app.test_client()
+        self.assertEqual(web.get("/").status_code, 200)
+        html = web.get("/").data.decode("utf-8")
+        self.assertIn("responsive.css", html)
+        self.assertIn("apple-touch-icon.png", html)
+        self.assertIn('client-mobile-list', html)
+        manifest = web.get("/manifest.webmanifest")
+        self.assertEqual(manifest.status_code, 200)
+        self.assertIn(b'icon-192.png', manifest.data)
+        self.assertIn(b'icon-512.png', manifest.data)
+        for path in ("/apple-touch-icon.png", "/icon-192.png", "/icon-512.png"):
+            image = web.get(path)
+            self.assertEqual(image.status_code, 200, path)
+            self.assertTrue(image.data.startswith(b"\x89PNG\r\n\x1a\n"), path)
+            self.assertTrue(image.content_type.startswith("image/png"), path)
+        self.assertEqual(web.get("/responsive.css").status_code, 200)
+        self.assertEqual(web.get("/sw.js").status_code, 200)
+        self.assertEqual(web.get("/api/data").status_code, 401)
+
     def test_shared_access_and_roles(self):
         owner = app.test_client()
         employee = app.test_client()
