@@ -53,10 +53,18 @@ class Tests(unittest.TestCase):
         data = owner.get("/api/data").json["data"]
         data["quotes"].append({"id": "q1", "total": 87})
         self.assertEqual(owner.put("/api/data", json={"revision":1, "data":data}).status_code, 200)
+        # Orçamento premium só pode ser gerado com login de proprietário.
+        quote_doc = owner.get("/api/quote-pdf/q1")
+        self.assertEqual(quote_doc.status_code, 200, quote_doc.json if quote_doc.is_json else quote_doc.status)
+        self.assertEqual(quote_doc.mimetype, "application/pdf")
+        self.assertTrue(quote_doc.data.startswith(b"%PDF-"))
+        self.assertIn("Orcamento_Thiago_Reis.pdf", quote_doc.headers.get("Content-Disposition", ""))
+        self.assertEqual(app.test_client().get("/api/quote-pdf/q1").status_code, 403)
         self.assertEqual(employee.post("/api/login", json={"role":"funcionario", "password":"incorreta"}).status_code, 401)
         self.assertEqual(employee.post("/api/login", json={"role":"funcionario", "password":"funcionario-teste-456"}).status_code, 200)
         em = employee.get("/api/data")
         self.assertEqual(em.status_code, 200)
+        self.assertEqual(employee.get("/api/quote-pdf/q1").status_code, 403)
         self.assertNotIn("quotes", em.json["data"])
         self.assertNotIn("settings", em.json["data"])
         employee_data = em.json["data"]
