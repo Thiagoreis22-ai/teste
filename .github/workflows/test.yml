@@ -1,0 +1,29 @@
+name: Validar backend Thiago Reis
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Dependências
+        run: pip install -r requirements.txt
+      - name: Testes de acesso e dados
+        run: python -m unittest discover -s tests -p 'test_*.py' -v
+      - name: Verificar JavaScript da interface
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          html = Path('thiago-reis-pro/index.html').read_text()
+          js = re.search(r'<script>(.*?)</script>', html, re.S).group(1)
+          Path('/tmp/app-check.js').write_text(js)
+          PY
+          node --check /tmp/app-check.js
