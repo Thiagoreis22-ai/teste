@@ -4,7 +4,7 @@ Em produção, configure DATABASE_URL (PostgreSQL), SETUP_TOKEN e APP_ENV=produc
 import os, json, time, secrets, hashlib, hmac, sqlite3
 from contextlib import contextmanager
 from pathlib import Path
-from flask import Flask, request, jsonify, make_response, g
+from flask import Flask, request, jsonify, make_response, g, send_from_directory, abort
 from werkzeug.security import generate_password_hash, check_password_hash
 
 BASE = Path(__file__).resolve().parent
@@ -118,6 +118,12 @@ def security_headers(response):
 @app.get("/healthz")
 def health():
     return jsonify(ok=True)
+
+@app.get("/<asset>")
+def gold_assets(asset):
+    if asset not in ("gold-theme.css", "brand-gold.svg", "hero-gold.svg"):
+        abort(404)
+    return send_from_directory(BASE / "thiago-reis-pro", asset, max_age=3600)
 
 @app.get("/")
 @app.get("/thiago-reis-pro/")
