@@ -1,7 +1,7 @@
 // Thiago Reis PRO — cache apenas dos recursos visuais. NUNCA cachear clientes, login ou API.
 // Interface HTML e dados operacionais são sempre obtidos pela rede.
-const CACHE_NAME = 'thiago-reis-ui-v8';
-const ASSETS = ['/gold-theme.css','/responsive.css','/brand-gold.svg','/hero-gold.svg','/tr-icon.svg'];
+const CACHE_NAME = 'thiago-reis-ui-v9';
+const ASSETS = ['/gold-theme.css','/responsive.css','/brand-gold.svg','/hero-gold.svg','/tr-icon.svg','/icon-192.png','/icon-512.png','/apple-touch-icon.png'];
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(CACHE_NAME).then(cache => Promise.allSettled(
     ASSETS.map(path => cache.add(new Request(path, {cache:'reload'}))
