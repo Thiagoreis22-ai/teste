@@ -124,7 +124,7 @@ def health():
 
 @app.get("/<asset>")
 def gold_assets(asset):
-    if asset not in ("gold-theme.css", "brand-gold.svg", "hero-gold.svg"):
+    if asset not in ("gold-theme.css", "responsive.css", "brand-gold.svg", "hero-gold.svg", "tr-icon.svg", "manifest.webmanifest", "sw.js", "apple-touch-icon.png", "icon-192.png", "icon-512.png"):
         abort(404)
     return send_from_directory(BASE / "thiago-reis-pro", asset, max_age=3600)
 
