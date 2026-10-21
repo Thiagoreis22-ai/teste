@@ -1,7 +1,7 @@
 """Thiago Reis PRO: servidor privado para login, orçamentos e dados compartilhados.
 Em produção, configure DATABASE_URL (PostgreSQL), SETUP_TOKEN e APP_ENV=production.
 """
-import os, json, time, secrets, hashlib, hmac, sqlite3
+import os, json, time, secrets, hashlib, hmac, sqlite3, base64, binascii
 from contextlib import contextmanager
 from pathlib import Path
 from flask import Flask, request, jsonify, make_response, g, send_from_directory, abort
@@ -60,6 +60,9 @@ def init_db():
             token_hash TEXT PRIMARY KEY, role TEXT NOT NULL, expires_at BIGINT NOT NULL)""")
         execute(db, """CREATE TABLE IF NOT EXISTS app_state (
             id INTEGER PRIMARY KEY, revision INTEGER NOT NULL, payload TEXT NOT NULL)""")
+        execute(db, """CREATE TABLE IF NOT EXISTS job_photos (
+            id TEXT PRIMARY KEY, job_id TEXT NOT NULL, kind TEXT NOT NULL,
+            content TEXT NOT NULL, created_at TEXT NOT NULL, uploader TEXT NOT NULL)""")
 
 init_db()
 
@@ -304,6 +307,83 @@ def passwords():
             execute(db, "UPDATE users SET password_hash=? WHERE role=?", (generate_password_hash(updates[role], method="scrypt"), role))
             execute(db, "DELETE FROM sessions WHERE role=?", (role,))
     return jsonify(ok=True, relogin=True)
+
+def job_exists(db, job_id):
+    row = execute(db, "SELECT payload FROM app_state WHERE id=1").fetchone()
+    if not row:
+        return False
+    try:
+        return any(isinstance(job, dict) and str(job.get("id")) == job_id
+                   for job in json.loads(row["payload"]).get("jobs", []))
+    except (ValueError, TypeError):
+        return False
+
+@app.get("/api/job-photos/<job_id>")
+def list_job_photos(job_id):
+    if not auth():
+        return bad("Entre novamente.", 401)
+    if len(job_id) > 100:
+        return bad("OS inválida.", 400)
+    with transaction() as db:
+        if not job_exists(db, job_id):
+            return bad("OS não encontrada.", 404)
+        rows = execute(db, "SELECT id,kind,created_at FROM job_photos WHERE job_id=? ORDER BY created_at", (job_id,)).fetchall()
+    return jsonify(photos=[{"id": x["id"], "kind": x["kind"], "createdAt": x["created_at"]} for x in rows])
+
+@app.post("/api/job-photos")
+def add_job_photo():
+    role = auth()
+    if not role:
+        return bad("Entre novamente.", 401)
+    data = input_json() or {}
+    job_id = str(data.get("jobId", ""))
+    kind = str(data.get("kind", ""))
+    encoded = data.get("data", "")
+    prefix = "data:image/jpeg;base64,"
+    if len(job_id) > 100 or len(job_id) < 4 or kind not in ("antes", "depois"):
+        return bad("OS ou etapa inválida.")
+    if not isinstance(encoded, str) or not encoded.startswith(prefix) or len(encoded) > 250000:
+        return bad("Foto muito grande; compacte antes de enviar.")
+    try:
+        raw = base64.b64decode(encoded[len(prefix):], validate=True)
+    except (binascii.Error, ValueError):
+        return bad("Arquivo inválido.")
+    if len(raw) < 50 or len(raw) > 180000 or not raw.startswith(b"\xff\xd8\xff"):
+        return bad("Somente fotos JPEG compactadas são aceitas.")
+    photo_id = secrets.token_hex(16)
+    with transaction() as db:
+        if not job_exists(db, job_id):
+            return bad("Salve a ordem de serviço antes de anexar fotos.", 404)
+        count = execute(db, "SELECT count(*) AS n FROM job_photos WHERE job_id=? AND kind=?", (job_id, kind)).fetchone()["n"]
+        if count >= 4:
+            return bad("Máximo de 4 fotos por etapa.", 409)
+        execute(db, "INSERT INTO job_photos(id,job_id,kind,content,created_at,uploader) VALUES(?,?,?,?,?,?)",
+                (photo_id, job_id, kind, encoded, time.strftime("%Y-%m-%d %H:%M:%S"), role))
+    return jsonify(ok=True, id=photo_id)
+
+@app.get("/api/job-photo/<photo_id>")
+def view_job_photo(photo_id):
+    if not auth():
+        return bad("Entre novamente.", 401)
+    if len(photo_id) != 32:
+        return bad("Foto não encontrada.", 404)
+    with transaction() as db:
+        row = execute(db, "SELECT content FROM job_photos WHERE id=?", (photo_id,)).fetchone()
+    if not row:
+        return bad("Foto não encontrada.", 404)
+    from flask import Response
+    content = base64.b64decode(row["content"].split(",", 1)[1])
+    response = Response(content, mimetype="image/jpeg")
+    response.headers["Cache-Control"] = "private, no-store"
+    return response
+
+@app.delete("/api/job-photo/<photo_id>")
+def remove_job_photo(photo_id):
+    if auth() != "dono":
+        return bad("Somente o proprietário pode excluir fotos.", 403)
+    with transaction() as db:
+        execute(db, "DELETE FROM job_photos WHERE id=?", (photo_id,))
+    return jsonify(ok=True)
 
 if __name__ == "__main__":
     app.run(host="127.0.0.1", port=int(os.getenv("PORT", "8000")), debug=False)
