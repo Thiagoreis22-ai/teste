@@ -1,0 +1,22 @@
+MOBILITYPRO — MOBILIDADE URBANA (NÃO É O APP DE ELÉTRICA)
+
+ESTE PACOTE CONTÉM: apps de passageiro, motorista e administrador;
+backend FastAPI integrado; PostgreSQL; código nativo Expo; configuração Render.
+Sem usuários, motoristas ou corridas falsos.
+
+PUBLICAÇÃO:
+- Coloque os arquivos em um repositório exclusivo para este app no GitHub.
+- Conecte esse repositório ao Render (New > Blueprint), usando render.yaml.
+- Informe DATABASE_URL de um banco PostgreSQL separado (Neon ou Supabase).
+- Guarde o SETUP_TOKEN criado pelo Render; NÃO compartilhe no chat.
+- Quando o site estiver Live, abra /instalar, use o token e crie o proprietário.
+- Abra /admin, /passageiro e /motorista.
+- Roteamento real: configure ROUTING_URL de servidor OSRM contratado ou MAPBOX_ACCESS_TOKEN.
+- PUBLIC_REGISTRATION é falso até você ativar operação após homologação.
+- A versão não tem Pix/cartão/SMS/push conectados. Dependem de conta e credenciais de provedores.
+- Upload de CNH/CRLV em ambiente grátis efêmero está bloqueado por segurança.
+
+Observações:
+- O banco gratuito do Render expira em 30 dias; não use para dados de produção.
+- Ainda precisa de homologação Android/iOS, segurança LGPD, backups, termos, jurídico e provedores.
+- Este é um aplicativo funcional em código, não significa que está hospedado.

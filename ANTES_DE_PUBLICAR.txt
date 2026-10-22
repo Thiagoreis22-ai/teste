@@ -1,0 +1,7 @@
+MOBILITYPRO — PRONTO PARA CONFIGURAR HOSPEDAGEM, NÃO PUBLICADO
+
+No ChatGPT, conecte uma conta de hospedagem (ex.: Replit, Railway) e autorize a criação do serviço.
+O arquivo sozinho não disponibiliza um link público.
+Abra docs/HOSPEDAGEM_CLOUD.md e docs/ATUALIZACAO_PUBLICACAO_22_10_2026.md.
+
+SEM DEMONSTRAÇÕES ENGANOSAS: pagamentos digitais, envio SMS e rotas reais exigem contratos e chaves.

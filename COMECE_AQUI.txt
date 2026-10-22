@@ -1,0 +1,22 @@
+MOBILITYPRO - TRÊS APLICATIVOS INTERLIGADOS - 22/10/2026
+
+1) Extraia a pasta MobilityPro deste ZIP no Windows.
+2) Tenha Python 3.11+ instalado (Add Python to PATH).
+3) Execute INICIAR_MOBILITYPRO_WINDOWS.bat.
+4) Na primeira inicialização instale dependências e crie seu login/senha de proprietário.
+5) Endereços no mesmo computador:
+   ADMINISTRATIVO: http://127.0.0.1:8080/admin
+   PASSAGEIRO:     http://127.0.0.1:8080/passageiro
+   MOTORISTA:      http://127.0.0.1:8080/motorista
+   API E DOCUMENTAÇÃO: http://127.0.0.1:8080/docs
+
+Painel: cidades, raio de atendimento, zonas vermelhas, tarifas e comissões,
+taxas semanais, motoristas, passageiros, corridas, financeiro, suporte, auditoria.
+Motorista: escolha Waze ou Google Maps no perfil para abrir navegação externa.
+
+ATENÇÃO: esta é uma versão funcional LOCAL para validação, NÃO uma operação
+comercial pronta. Faltam serviços externos reais de SMS, pagamentos,
+roteamento de produção, publicação em loja e hospedagem HTTPS auditada.
+Rotas por distância direta estão ligadas SOMENTE para TESTE LOCAL.
+Leia README.md e docs/STATUS_DE_ENTREGA.md e ATUALIZACAO_MOBILITYPRO.md.
+Nunca publique este modo de testes na internet.
